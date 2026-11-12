@@ -1,0 +1,733 @@
+<style>
+.ef { --g: var(--cds-gap-md); display: flex; flex-direction: column; gap: var(--cds-gap-lg); font-family: var(--font-anthropic-sans); }
+.ef-head { display: flex; flex-direction: column; gap: var(--cds-gap-sm); }
+.ef-title { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0; text-wrap: balance; }
+.ef-take { color: var(--color-fg-muted); font-size: var(--cds-font-size-body); margin: 0; max-width: 70ch; }
+.ef-take b, .ef .ef-strong { font-weight: 500; color: var(--color-fg); }
+.ef-chips { display: flex; flex-wrap: wrap; gap: var(--cds-gap-sm); align-items: center; }
+.ef-chips-label { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin-right: var(--cds-gap-xs); }
+#ef-chips, #ef-meses { display: flex; flex-wrap: wrap; gap: var(--cds-gap-sm); }
+.ef-chip { font: inherit; font-size: var(--cds-font-size-body); padding: var(--cds-pad-xs) var(--cds-pad-md); border-radius: 999px; border: 1px solid var(--color-border-line); background: var(--color-panel); color: var(--color-fg); cursor: pointer; }
+.ef-chip:hover { border-color: var(--color-fg-muted); }
+.ef-chip[aria-pressed="true"] { background: var(--color-fg); color: var(--color-bg); border-color: var(--color-fg); }
+.ef-chip:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+.ef-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: var(--g); }
+.ef-tile { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); display: flex; flex-direction: column; gap: var(--cds-gap-xs); min-width: 0; }
+.ef-tile-label { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.ef-tile-value { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: 2.25rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.ef-tile-note { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
+.ef-pill { display: inline-block; font-size: var(--cds-font-size-caption); padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; width: fit-content; }
+.ef-ok { color: var(--color-ok); } .ef-warn { color: var(--color-warn); } .ef-bad { color: var(--color-bad); }
+.ef-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr)); gap: var(--g); }
+.ef-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); display: flex; flex-direction: column; gap: var(--cds-gap-sm); min-width: 0; }
+.ef-card h2 { font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); margin: 0; }
+.ef-note { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin: 0; }
+.ef-chart { position: relative; min-height: 220px; }
+.ef-legend-inline { display: flex; flex-wrap: wrap; gap: var(--cds-gap-md); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.bl { display: flex; flex-direction: column; gap: 12px; padding-top: 4px; }
+.bl-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: var(--cds-font-size-body); }
+.bl-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-fg); }
+.bl-rank { color: var(--color-fg-muted); font-variant-numeric: tabular-nums; display: inline-block; min-width: 1.8em; }
+.bl-val { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 500; color: var(--color-fg); }
+.bl-sub { font-weight: 400; color: var(--color-fg-muted); margin-left: 8px; font-size: var(--cds-font-size-caption); }
+.bl-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+.bl-track { position: relative; height: 5px; margin-top: 5px; border-radius: 3px; background: var(--cds-chart-grid); }
+.bl-fill { height: 100%; border-radius: 3px; background: var(--cds-chart-muted); }
+.bl-ref { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--color-fg-muted); }
+.bl-more { margin-top: 10px; font: inherit; font-size: var(--cds-font-size-caption); color: var(--color-fg); background: none; border: 1px solid var(--color-border-line); border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+.bl-more:hover { border-color: var(--color-fg-muted); }
+.ef-scroll { max-height: 34rem; overflow: auto; }
+.ef-legend { display: flex; flex-wrap: wrap; gap: var(--cds-gap-md); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.ef-legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; background: var(--sw); }
+.ef-tip { position: absolute; pointer-events: none; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); white-space: nowrap; z-index: 5; }
+.ef-tip .k { color: var(--cds-text-secondary); }
+.ef-tablewrap { max-height: 30rem; overflow: auto; }
+.ef-table { width: 100%; border-collapse: collapse; font-size: var(--cds-font-size-body); font-variant-numeric: tabular-nums; }
+.ef-table th { position: sticky; top: 0; background: var(--color-panel); text-align: left; font-weight: 500; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); padding: var(--cds-pad-xs) var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); }
+.ef-table th button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+.ef-table td { padding: var(--cds-pad-xs) var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); }
+.ef-table .n { text-align: right; }
+.ef-search { font: inherit; padding: var(--cds-pad-xs) var(--cds-pad-sm); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-bg); color: var(--color-fg); max-width: 20rem; }
+.ef-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: currentColor; }
+@media (max-width: 40rem) { .ef-hide-sm { display: none; } }
+[data-dash-source-state=empty] { color: transparent; }
+[data-dash-source-state=refreshing] { opacity: .5; transition: opacity var(--cds-dur-slow); }
+.ef-fail { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: inherit; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.ef-fail::before { content: ""; width: .375rem; height: .375rem; border-radius: 50%; background: var(--color-bad); }
+/* Estilo menta: tarjetas suaves, encabezado verde oscuro, cápsulas */
+.ef { --ef-accent: #009ccc; --ef-accent-2: #5fc7e8; --ef-navy: #003c64; --ef-hero: #003c64; --ef-hero-2: #00618f; --ef-peach: #aab4bb; --ef-gray: #6b6b6b; --ef-on-hero: #eaf5fb;
+  --ef-tint: color-mix(in srgb, var(--ef-accent) 9%, var(--color-panel)); --ef-tint2: color-mix(in srgb, var(--ef-accent) 18%, var(--color-panel));
+  --ef-shadow: 0 1px 2px rgba(0, 40, 70, .05), 0 10px 28px rgba(0, 40, 70, .08); --ef-r: 22px;
+  background: color-mix(in srgb, var(--ef-accent) 7%, var(--color-bg)); border-radius: 28px; padding: clamp(10px, 2vw, 22px); }
+.ef-card, .ef-tile { border: 1px solid color-mix(in srgb, var(--ef-accent) 10%, var(--color-border-line)); border-radius: var(--ef-r); box-shadow: var(--ef-shadow); }
+.ef-card h2 { font-size: 1.05rem; letter-spacing: -.01em; }
+.ef-head { background: linear-gradient(135deg, var(--ef-hero), var(--ef-hero-2)); color: var(--ef-on-hero); border-radius: var(--ef-r); padding: clamp(16px, 2.4vw, 28px); box-shadow: var(--ef-shadow); gap: 10px; }
+.ef-head .ef-title { color: #fff; font-size: clamp(1.6rem, 3vw, 2.2rem); }
+.ef-brand { display: flex; align-items: center; gap: 16px; }
+.ef-logo { flex: none; background: #fff; border-radius: 18px; padding: 8px 12px; box-shadow: 0 4px 14px rgba(0, 20, 40, .25); display: grid; place-items: center; }
+.ef-logo img { display: block; height: clamp(44px, 6vw, 64px); width: auto; }
+.ef-head::after { content: ""; display: block; height: 3px; border-radius: 3px; margin-top: 4px; background: linear-gradient(90deg, var(--ef-accent), transparent 70%); }
+.ef-card h2::before { content: ""; display: inline-block; width: 4px; height: .9em; border-radius: 2px; background: var(--ef-accent); margin-right: 8px; vertical-align: -1px; }
+.ef-head .ef-note, .ef-head .ef-take, .ef-head .ef-chips-label { color: color-mix(in srgb, var(--ef-on-hero) 72%, transparent); }
+.ef-head .ef-take b { color: #fff; }
+.ef-head .ef-chip { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .18); color: var(--ef-on-hero); display: inline-flex; align-items: center; gap: 8px; }
+.ef-head .ef-chip:hover { border-color: rgba(255, 255, 255, .45); }
+.ef-head .ef-chip[aria-pressed="true"] { background: var(--ef-on-hero); color: var(--ef-hero); border-color: var(--ef-on-hero); }
+.ef-head .ef-chip:focus-visible { outline-color: #fff; }
+.ef-av { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font-size: 10px; font-weight: 600; background: var(--ef-accent-2); color: var(--ef-navy); flex: none; }
+.ef-tile { background: var(--color-panel); gap: 6px; }
+.ef-tile-value { font-size: 2.1rem; letter-spacing: -.02em; }
+.ef-tile.ef-hl { background: linear-gradient(160deg, var(--ef-tint2), var(--ef-tint)); }
+.ef-pill { border: 0; padding: 2px 10px; background: color-mix(in srgb, currentColor 12%, transparent); font-weight: 500; }
+.ef-seg { display: grid; grid-template-columns: repeat(20, 1fr); gap: 3px; height: 9px; margin: 2px 0; }
+.ef-seg i { border-radius: 3px; background: var(--ef-tint2); }
+.ef-seg i.on { background: var(--ef-accent); }
+.ef-seg i.ref { box-shadow: inset 0 0 0 1.5px var(--color-fg-muted); }
+.bl-track { height: 7px; border-radius: 99px; background: var(--ef-tint2); }
+.bl-fill { border-radius: 99px; background: linear-gradient(90deg, var(--ef-accent-2), var(--ef-accent)); }
+.bl-rank { display: inline-grid; place-items: center; min-width: 0; width: 20px; height: 20px; margin-right: 8px; border-radius: 50%; background: var(--ef-tint2); color: var(--color-fg); font-size: 11px; }
+.bl-more { border-color: transparent; background: var(--ef-tint2); }
+.bl-more:hover { border-color: var(--ef-accent); }
+.ef-card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.ef-team { display: flex; gap: clamp(10px, 2.5vw, 28px); overflow-x: auto; padding: 8px 2px 4px; min-height: 230px; }
+.ef-mem { font: inherit; color: var(--color-fg); background: none; border: 1px solid transparent; border-radius: 18px; padding: 10px 8px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; min-width: 92px; flex: 1 0 92px; }
+.ef-mem:hover { background: var(--ef-tint); }
+.ef-mem[aria-pressed="true"] { background: var(--ef-tint2); border-color: color-mix(in srgb, var(--ef-accent) 35%, transparent); }
+.ef-mem:focus-visible { outline: 2px solid var(--ef-accent); outline-offset: 2px; }
+.ef-cap { position: relative; width: 38px; height: 130px; border-radius: 99px; background: var(--ef-tint2); overflow: hidden; }
+.ef-cap i { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 99px; }
+.ef-cap .ref { position: absolute; left: 4px; right: 4px; height: 2px; border-radius: 1px; background: color-mix(in srgb, var(--color-fg) 45%, transparent); }
+.ef-mem .v { font-weight: 600; font-variant-numeric: tabular-nums; font-size: .95rem; }
+.ef-mem .n { font-size: var(--cds-font-size-caption); text-align: center; line-height: 1.25; }
+.ef-mem .s { font-size: 11px; color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
+.ef-mem .ef-av { width: 30px; height: 30px; font-size: 11px; }
+.ef-tablewrap { border-radius: 14px; }
+.ef-search { border-radius: 99px; padding-inline: 14px; }
+/* Compacto + íconos */
+.ef-ic { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; background: var(--ef-tint2); color: var(--ef-navy); margin-right: 8px; vertical-align: middle; flex: none; }
+.ef-tile-label .ef-ic { width: 22px; height: 22px; border-radius: 7px; margin-right: 6px; }
+.ef-tile-label .ef-ic svg { width: 13px; height: 13px; }
+.ef-card h2::before { content: none; }
+.ef-card h2 { display: flex; align-items: center; font-size: .98rem; }
+.ef-ttl { display: flex; align-items: center; }
+.ef-card { padding: var(--cds-pad-md) var(--cds-pad-lg); gap: 6px; }
+.ef-tile { padding: var(--cds-pad-md); gap: 4px; }
+.ef-tile-value { font-size: 1.65rem; }
+.ef-seg { height: 7px; gap: 2px; }
+.ef-chart { min-height: 140px; }
+.bl { gap: 7px; }
+.bl-top { font-size: .84rem; }
+.bl-track { height: 4px; margin-top: 3px; }
+.bl-rank { width: 17px; height: 17px; font-size: 10px; margin-right: 6px; }
+.bl-more { margin-top: 6px; padding: 2px 10px; }
+.ef-team { min-height: 0; gap: 6px; padding: 2px 0; }
+.ef-mem { min-width: 64px; flex: 1 0 64px; padding: 6px 4px; gap: 4px; border-radius: 14px; }
+.ef-cap { width: 22px; height: 72px; }
+.ef-mem .v { font-size: .8rem; }
+.ef-mem .n { font-size: 11px; }
+.ef-mem .s { font-size: 10px; }
+.ef-mem .ef-av { width: 22px; height: 22px; font-size: 9px; }
+/* 2 filas x 3 gráficos + señal */
+.ef-grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--g); align-items: stretch; }
+@media (max-width: 68rem) { .ef-grid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 44rem) { .ef-grid3 { grid-template-columns: minmax(0, 1fr); } }
+
+.ef-grid3 .ef-note { font-size: 11.5px; }
+.ef-sig { display: flex; align-items: flex-end; gap: 3px; height: 30px; }
+.ef-sig i { width: 6px; border-radius: 2px; background: var(--ef-tint2); }
+.ef-sig i.on { background: #aab4bb; }
+.ef-sig.ok i.on { background: var(--ef-accent); }
+.ef-tw { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 7px; background: var(--ef-tint2); color: var(--ef-navy); }
+.bl-click { font: inherit; color: inherit; text-align: left; background: none; border: 0; display: block; width: 100%; padding: 4px 6px; border-radius: 10px; cursor: pointer; box-sizing: border-box; }
+.bl-click:hover { background: var(--ef-tint); }
+.bl-click:focus-visible { outline: 2px solid var(--ef-accent); outline-offset: 1px; }
+.bl-chev { margin-left: 6px; color: var(--ef-accent); font-weight: 600; }
+.ef-drill { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.ef-back { align-self: flex-start; font: inherit; font-size: 12px; color: var(--ef-navy); background: var(--ef-tint2); border: 0; border-radius: 99px; padding: 3px 10px; cursor: pointer; }
+.ef-back:hover { background: color-mix(in srgb, var(--ef-accent) 28%, var(--color-panel)); }
+.ef-drill-t { font-size: .88rem; color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
+.ef-drill-t b { color: var(--color-fg); font-weight: 600; }
+.mt-list { display: flex; flex-direction: column; gap: 4px; }
+.mt-row { font: inherit; color: inherit; text-align: left; background: none; border: 1px solid transparent; border-radius: 12px; padding: 6px 8px; display: grid; grid-template-columns: minmax(150px, 1.1fr) minmax(120px, 2fr) minmax(150px, 1.1fr) minmax(150px, 1fr); align-items: center; gap: 12px; width: 100%; }
+button.mt-row { cursor: pointer; }
+button.mt-row:hover { background: var(--ef-tint); }
+.mt-row[aria-pressed="true"] { background: var(--ef-tint2); border-color: color-mix(in srgb, var(--ef-accent) 35%, transparent); }
+.mt-total { border-top: 1px solid var(--color-border-line); border-radius: 0; margin-top: 4px; padding-top: 10px; font-weight: 600; }
+.mt-name { display: flex; align-items: center; gap: 8px; font-size: .86rem; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mt-track { position: relative; height: 10px; border-radius: 99px; background: var(--ef-tint2); }
+.mt-track i { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 99px; }
+.mt-proj { background: color-mix(in srgb, var(--ef-accent) 30%, transparent); }
+.mt-fill { background: linear-gradient(90deg, var(--ef-accent-2), var(--ef-accent)); }
+.mt-meta { left: auto; width: 2px; top: -4px !important; bottom: -4px !important; border-radius: 1px !important; background: var(--ef-navy); margin-left: -1px; }
+.mt-val { font-size: .82rem; color: var(--color-fg-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mt-val b { color: var(--color-fg); font-weight: 600; }
+.mt-proyv { font-size: .8rem; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (max-width: 52rem) { .mt-row { grid-template-columns: 1fr 1fr; } .mt-track { grid-column: 1 / -1; order: 3; } }
+.ef-mem { min-width: 118px; flex: 1 0 118px; }
+.ef-mem .g { display: flex; flex-direction: column; align-items: center; gap: 1px; margin-top: 4px; padding-top: 5px; border-top: 1px solid var(--color-border-line); width: 100%; font-size: 10.5px; color: var(--color-fg-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ef-mem .g .pj, .ef-mtot .pj { font-weight: 600; }
+.ef-mtot { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; font-size: .84rem; color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
+.ef-mtot:empty { display: none; }
+.ef-mtot b { color: var(--color-fg); font-weight: 600; }
+.ef-mtot .dh { margin-left: auto; font-size: 11.5px; }
+</style>
+
+<div class="ef">
+  <header class="ef-head" id="resumen">
+    <div class="ef-brand">
+      <span class="ef-logo"><img src="data:image/png;base64,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" alt="Conectar"></span>
+      <div>
+        <h1 class="ef-title">Efectividad de la operación</h1>
+        <p class="ef-note" id="ef-periodo" data-source="resumen"></p>
+      </div>
+    </div>
+    <p class="ef-take" id="ef-take"><span class="dash-skeleton">—</span></p>
+    <div class="ef-chips" role="group" aria-label="Mes">
+      <span class="ef-chips-label">Mes</span>
+      <span id="ef-meses" data-source="resumen"></span>
+    </div>
+    <div class="ef-chips" role="group" aria-label="Supervisor">
+      <span class="ef-chips-label">Supervisor</span>
+      <span id="ef-chips" data-source="resumen"></span>
+    </div>
+  </header>
+
+  <section class="ef-tiles" id="indicadores">
+    <div class="ef-tile">
+      <span class="ef-tile-label"><span class="ef-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20v-3M9 20v-7M14 20V9M19 20V4"/></svg></span>Efectividad</span>
+      <span class="ef-tile-value dash-skeleton" id="t-ef">—</span>
+      <div class="ef-seg" id="t-ef-seg" aria-hidden="true"></div>
+      <span class="ef-pill" id="t-ef-pill"></span>
+      <span class="ef-tile-note" id="t-ef-note">Órdenes completadas sobre asignadas</span>
+    </div>
+    <div class="ef-tile">
+      <span class="ef-tile-label"><span class="ef-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span>Calidad</span>
+      <span class="ef-tile-value dash-skeleton" id="t-cal">—</span>
+      <div class="ef-seg" id="t-cal-seg" aria-hidden="true"></div>
+      <span class="ef-pill" id="t-cal-pill"></span>
+      <span class="ef-tile-note" id="t-cal-note">1 − garantías sobre completadas</span>
+    </div>
+    <div class="ef-tile">
+      <span class="ef-tile-label"><span class="ef-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9.5 3h5v3h-5zM9 13l2 2 4-4"/></svg></span>Supervisiones hechas</span>
+      <span class="ef-tile-value dash-skeleton" id="t-sup">—</span>
+      <span class="ef-tile-note" id="t-sup-note">Visitas en campo del periodo</span>
+    </div>
+    <div class="ef-tile">
+      <span class="ef-tile-label"><span class="ef-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 11a6 6 0 0 1 12 0M4 11h16M8 11v1a4 4 0 0 0 8 0v-1M5 21a7 7 0 0 1 14 0"/></svg></span>Técnicos supervisados</span>
+      <span class="ef-tile-value dash-skeleton" id="t-cob">—</span>
+      <span class="ef-tile-note" id="t-cob-note">Del equipo, al menos una vez</span>
+    </div>
+    <div class="ef-tile">
+      <span class="ef-tile-label"><span class="ef-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4h-4"/></svg></span>Reincidencias supervisadas</span>
+      <span class="ef-tile-value dash-skeleton" id="t-rs">—</span>
+      <span class="ef-tile-note" id="t-rs-note">Visitas a órdenes de reincidencia o garantía</span>
+    </div>
+    <div class="ef-tile ef-hl">
+      <span class="ef-tile-label"><span class="ef-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .9-3 2s1.3 1.7 3 2 3 .9 3 2-1.3 2-3 2c-1.4 0-2.6-.6-3-1.6M12 6.5v11"/></svg></span>Facturado</span>
+      <span class="ef-tile-value dash-skeleton" id="t-fac">—</span>
+      <span class="ef-tile-note" id="t-fac-note">Según la pestaña Presupuesto</span>
+    </div>
+  </section>
+
+  <section class="ef-card" id="equipo">
+    <div class="ef-card-head"><h2><span class="ef-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 10v11M8.5 21L12 10l3.5 11M9.6 17h4.8"/><circle cx="12" cy="7.5" r="1.5"/><path d="M8.6 4.2a5 5 0 0 0 0 6.6M15.4 4.2a5 5 0 0 1 0 6.6M6 2a8.5 8.5 0 0 0 0 11M18 2a8.5 8.5 0 0 1 0 11"/></svg></span>Equipo de supervisores</h2><span class="ef-note">Señal = efectividad del mes (5 rayas = 100 %) · azul: cumple la meta · gris: por debajo · toca uno para filtrar</span></div>
+    <div class="ef-mtot" id="mt-tot" data-source="cumplimiento"></div>
+    <div class="ef-team" id="c-team" data-source="resumen cumplimiento"></div>
+  </section>
+
+  <section class="ef-grid3">
+    <div class="ef-card" id="ranking">
+      <h2><span class="ef-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 11a6 6 0 0 1 12 0M4 11h16M8 11v1a4 4 0 0 0 8 0v-1M5 21a7 7 0 0 1 14 0"/></svg></span>Efectividad por técnico</h2>
+      <p class="ef-note">De mayor a menor, con completadas sobre asignadas. La raya vertical marca la meta.</p>
+      <div class="ef-legend-inline"><span><span class="bl-dot" style="background: var(--color-ok)"></span>En meta</span><span><span class="bl-dot" style="background: var(--color-warn)"></span>Cerca</span><span><span class="bl-dot" style="background: var(--color-bad)"></span>Por debajo</span></div>
+      <div class="ef-chart" id="c-rank" data-source="tecnicos"></div>
+    </div>
+    <div class="ef-card" id="carpetas">
+      <h2><span class="ef-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c4 0 5-10 9-10s5 10 9 10"/><circle cx="3" cy="17" r="1.6"/><circle cx="21" cy="17" r="1.6"/><path d="M12 7V3"/></svg></span>Efectividad por carpeta</h2>
+      <p class="ef-note" id="carp-note">Completadas sobre asignadas en cada carpeta. Toca una carpeta para ver sus técnicos.</p>
+      <div class="ef-chart" id="c-carp" data-source="carpetas carpeta_tecnicos"></div>
+    </div>
+    <div class="ef-card" id="tendencia">
+      <h2><span class="ef-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 6-7"/></svg></span>Efectividad día a día</h2>
+      <p class="ef-note">Porcentaje de órdenes completadas cada día del periodo.</p>
+      <div class="ef-chart" id="c-dia" data-source="diario"></div>
+    </div>
+    <div class="ef-card" id="fact-tec">
+      <h2><span class="ef-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .9-3 2s1.3 1.7 3 2 3 .9 3 2-1.3 2-3 2c-1.4 0-2.6-.6-3-1.6M12 6.5v11"/></svg></span>Facturación por técnico</h2>
+      <p class="ef-note" id="ft-note">De mayor a menor, con las órdenes facturadas. Valor = precio × cantidad de cada actividad.</p>
+      <div class="ef-chart" id="c-ftec" data-source="fact_tecnicos"></div>
+    </div>
+    <div class="ef-card" id="fact-carp">
+      <h2><span class="ef-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c4 0 5-10 9-10s5 10 9 10"/><circle cx="3" cy="17" r="1.6"/><circle cx="21" cy="17" r="1.6"/><path d="M12 7V3"/></svg></span>Facturación por carpeta</h2>
+      <p class="ef-note" id="fcarp-note">Valor facturado de cada carpeta y su parte del total. Toca una carpeta para ver sus técnicos.</p>
+      <div class="ef-chart" id="c-fcarp" data-source="fact_carpetas fact_carpeta_tecnicos"></div>
+    </div>
+    <div class="ef-card" id="tipos">
+      <h2><span class="ef-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 16.5h.01M11 16.5h.01M17 13V9M14.5 6.5a3.5 3.5 0 0 1 5 0M12.5 4.5a6.5 6.5 0 0 1 9 0"/></svg></span>Supervisiones por tipo de actividad</h2>
+      <p class="ef-note">Visitas de campo por tipo de trabajo y su parte del total.</p>
+      <div class="ef-chart" id="c-tipo" data-source="sup_tipo"></div>
+    </div>
+  </section>
+
+  <section class="ef-card" id="tabla-tecnicos">
+    <h2><span class="ef-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg></span>Detalle por técnico</h2>
+    <p class="ef-note">Toca un encabezado para ordenar. Garantías son órdenes que volvieron por falla del trabajo del técnico.</p>
+    <input class="ef-search" id="ef-q" type="search" placeholder="Buscar técnico" aria-label="Buscar técnico">
+    <div class="ef-tablewrap">
+      <table class="ef-table" id="tb-tec" data-source="tecnicos" data-row-key="mes,tecnico">
+        <thead><tr>
+          <th data-field="tecnico"><button data-k="tecnico">Técnico</button></th>
+          <th data-field="supervisor" class="ef-hide-sm"><button data-k="supervisor">Supervisor</button></th>
+          <th data-field="total" class="n"><button data-k="total">Asignadas</button></th>
+          <th data-field="efectividad" class="n"><button data-k="efectividad">Efectividad</button></th>
+          <th data-field="garantias" class="n ef-hide-sm"><button data-k="garantias">Garantías</button></th>
+          <th data-field="calidad" class="n"><button data-k="calidad">Calidad</button></th>
+          <th data-field="supervisado" class="n"><button data-k="supervisado">Veces supervisado</button></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="ef-card" id="mis-supervisiones">
+    <div class="ef-ttl"><span class="ef-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9.5 3h5v3h-5zM9 13l2 2 4-4"/></svg></span><h2 id="ms-title">Supervisiones registradas</h2></div>
+    <p class="ef-note">Cada visita de campo, la más reciente primero. Toca un encabezado para ordenar; en Reincidencia, el primer toque ordena de mayor a menor. Reincidencia indica que la orden supervisada era una visita por reincidencia o garantía.</p>
+    <div class="ef-chips" role="group" aria-label="Filtro de supervisiones">
+      <button class="ef-chip" id="ms-all" aria-pressed="true">Todas</button>
+      <button class="ef-chip" id="ms-reinc" aria-pressed="false">Solo reincidencias</button>
+    </div>
+    <div class="ef-tablewrap">
+      <table class="ef-table" id="tb-sup" data-source="supervisiones" data-row-key="id">
+        <thead><tr>
+          <th data-field="id" class="ef-hide-sm">N.º</th>
+          <th data-field="dia"><button data-k="dia">Fecha</button></th>
+          <th data-field="supervisor" class="ef-hide-sm"><button data-k="supervisor">Supervisor</button></th>
+          <th data-field="tipo"><button data-k="tipo">Tipo</button></th>
+          <th data-field="tecnico_supervisado"><button data-k="tecnico_supervisado">Técnico supervisado</button></th>
+          <th data-field="orden" class="ef-hide-sm">Orden</th>
+          <th data-field="reinc_garantia" class="n"><button data-k="reinc_garantia">Reincidencia</button></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="ef-note">Datos del Excel de seguimiento en OneDrive, actualizado cada día a las 6:00 p. m. Sin actividades ni supervisiones Pymes y sin el supervisor Dilmer. Metas de referencia: efectividad 80 %, calidad 92 %.</p>
+</div>
+
+<script>
+window.EF = {
+  META_EF: 0.80, META_CAL: 0.92,
+  money(v) { return v >= 1e6 ? '$' + (v / 1e6).toLocaleString('es-CO', {maximumFractionDigits: 1, minimumFractionDigits: 1}) + ' M' : '$' + Math.round(v).toLocaleString('es-CO'); },
+  ini(s) { return s.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase(); },
+  accent: '#009ccc',
+  TOWER: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 10v11M8.5 21L12 10l3.5 11M9.6 17h4.8"/><circle cx="12" cy="7.5" r="1.5"/><path d="M8.6 4.2a5 5 0 0 0 0 6.6M15.4 4.2a5 5 0 0 1 0 6.6"/></svg>',
+  pct: d3.format('.1%'), pct0: d3.format('.0%'), num: d3.format(','),
+  sup: () => dash.params().sup || 'Todos',
+  mes() { const p = dash.params().mes; if (p) return p; const r = dash.data('resumen'); return r.status === 'ok' && r.data.length ? d3.max(r.data, (d) => d.mes) : null; },
+  state(v, meta) { return v >= meta ? 'ok' : v >= meta - 0.05 ? 'warn' : 'bad'; },
+  color(s) { return s === 'ok' ? 'var(--color-ok)' : s === 'warn' ? 'var(--color-warn)' : 'var(--color-bad)'; },
+  label(s) { return s === 'ok' ? 'En meta' : s === 'warn' ? 'Cerca de la meta' : 'Por debajo de la meta'; },
+  where(obj) { return Object.entries(obj).map(([k, v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v)).join('&'); },
+  mark(el, src, field, obj) { el.dataset.source = src; el.dataset.field = field; el.dataset.where = EF.where(obj); },
+  fail(el) { el.replaceChildren(); const d = document.createElement('div'); d.className = 'ef-fail'; d.textContent = 'Failed to load'; el.appendChild(d); },
+  tip(box) {
+    let t = box.querySelector('.ef-tip');
+    if (!t) { t = document.createElement('div'); t.className = 'ef-tip'; t.hidden = true; box.appendChild(t); }
+    return {
+      show(ev, lines) {
+        t.replaceChildren(...lines.map((l, i) => { const d = document.createElement('div'); if (i === 0) d.className = 'k'; d.textContent = l; return d; }));
+        t.hidden = false;
+        const r = box.getBoundingClientRect(); let x = ev.clientX - r.left + 12, y = ev.clientY - r.top + 12;
+        if (x + t.offsetWidth > box.clientWidth) x = Math.max(0, ev.clientX - r.left - t.offsetWidth - 12);
+        t.style.left = x + 'px'; t.style.top = y + 'px';
+      },
+      hide() { t.hidden = true; }
+    };
+  }
+};
+</script>
+
+<script>
+const chips = document.getElementById('ef-chips');
+document.getElementById('c-team').addEventListener('click', (e) => { const b = e.target.closest('button[data-sup]'); if (b) dash.setParams({sup: EF.sup() === b.dataset.sup ? 'Todos' : b.dataset.sup}); });
+chips.addEventListener('click', (e) => { const b = e.target.closest('button[data-sup]'); if (b) dash.setParams({sup: b.dataset.sup}); });
+const mesesEl = document.getElementById('ef-meses');
+mesesEl.addEventListener('click', (e) => { const b = e.target.closest('button[data-mes]'); if (!b) return; const r = dash.data('resumen'); const sup = EF.sup(); const ok = r.status === 'ok' && r.data.some((d) => d.mes === b.dataset.mes && d.supervisor === sup); dash.setParams(ok ? {mes: b.dataset.mes} : {mes: b.dataset.mes, sup: 'Todos'}); });
+dash.onData(() => {
+  const r = dash.data('resumen'); const sup = EF.sup();
+  const tiles = ['t-ef', 't-cal', 't-sup', 't-cob', 't-rs', 't-fac'].map((id) => document.getElementById(id));
+  const take = document.getElementById('ef-take');
+  if (r.status !== 'ok') {
+    tiles.forEach((t) => { t.textContent = '—'; t.classList.toggle('dash-skeleton', r.status === 'loading'); });
+    return;
+  }
+  const mes = EF.mes();
+  const meses = [...new Map(r.data.filter((d) => d.supervisor === 'Todos').map((d) => [d.mes, d.mes_nombre || d.mes])).entries()].sort((x, y) => x[0].localeCompare(y[0]));
+  mesesEl.replaceChildren(...meses.map(([m, nombre]) => { const b = document.createElement('button'); b.className = 'ef-chip'; b.dataset.mes = m; b.textContent = nombre; b.setAttribute('aria-pressed', String(m === mes)); return b; }));
+  const order = ['Todos', ...r.data.filter((d) => d.mes === mes && d.supervisor !== 'Todos').map((d) => d.supervisor).sort((a, b) => a.localeCompare(b, 'es'))];
+  chips.replaceChildren(...order.map((s) => { const b = document.createElement('button'); b.className = 'ef-chip'; b.dataset.sup = s; if (s !== 'Todos') { const av = document.createElement('span'); av.className = 'ef-av'; av.textContent = EF.ini(s); b.appendChild(av); } b.append(s); b.setAttribute('aria-pressed', String(s === sup)); return b; }));
+  const row = r.data.find((d) => d.mes === mes && d.supervisor === sup) || r.data.find((d) => d.mes === mes && d.supervisor === 'Todos') || r.data[0];
+  const w = {mes: row.mes, supervisor: row.supervisor};
+  const per = document.getElementById('ef-periodo'); per.replaceChildren();
+  if (row.periodo) { const ps = document.createElement('span'); EF.mark(ps, 'resumen', 'periodo', w); ps.textContent = row.periodo; per.append('Del ', ps); }
+  tiles.forEach((t) => t.classList.remove('dash-skeleton'));
+  EF.mark(tiles[0], 'resumen', 'efectividad', w); tiles[0].textContent = EF.pct(row.efectividad);
+  EF.mark(tiles[1], 'resumen', 'calidad', w); tiles[1].textContent = EF.pct(row.calidad);
+  EF.mark(tiles[2], 'resumen', 'supervisiones', w); tiles[2].textContent = EF.num(row.supervisiones);
+  EF.mark(tiles[3], 'resumen', 'cobertura', w); tiles[3].textContent = EF.pct0(row.cobertura);
+  EF.mark(tiles[4], 'resumen', 'sup_con_garantia', w); tiles[4].textContent = EF.num(row.sup_con_garantia);
+  const n5 = document.getElementById('t-rs-note'); n5.replaceChildren();
+  if (row.reinc_total != null) {
+    const rp = document.createElement('span'); EF.mark(rp, 'resumen', 'pct_reinc_supervisadas', w); rp.textContent = EF.pct(row.pct_reinc_supervisadas);
+    const rt = document.createElement('span'); EF.mark(rt, 'resumen', 'reinc_total', w); rt.textContent = EF.num(row.reinc_total);
+    n5.append(rp, ' de las ', rt, ' reincidencias del periodo');
+  } else n5.append('Visitas a órdenes de reincidencia o garantía');
+  const n6 = document.getElementById('t-fac-note'); n6.replaceChildren();
+  if (row.facturado) {
+    EF.mark(tiles[5], 'resumen', 'facturado', w); tiles[5].textContent = EF.money(row.facturado);
+    const pt = document.createElement('span'); EF.mark(pt, 'resumen', 'prom_tec', w); pt.textContent = EF.money(row.prom_tec);
+    const of = document.createElement('span'); EF.mark(of, 'resumen', 'ordenes_facturadas', w); of.textContent = EF.num(row.ordenes_facturadas);
+    n6.append(pt, ' por técnico · ', of, ' órdenes');
+  } else { ['source', 'field', 'where'].forEach((k) => delete tiles[5].dataset[k]); tiles[5].textContent = '—'; n6.append('Sin datos de presupuesto este mes'); }
+  const seg = (id, v, meta) => { const el = document.getElementById(id); el.replaceChildren(...d3.range(20).map((i) => { const x = document.createElement('i'); if ((i + 0.5) / 20 <= v) x.className = 'on'; if (Math.floor(meta * 20) === i) x.classList.add('ref'); return x; })); };
+  seg('t-ef-seg', row.efectividad, EF.META_EF); seg('t-cal-seg', row.calidad, EF.META_CAL);
+  const team = document.getElementById('c-team'); team.replaceChildren();
+  const cud = dash.data('cumplimiento'); const cu = cud.status === 'ok' ? cud.data.filter((x) => x.mes === mes) : [];
+  r.data.filter((d) => d.mes === mes && d.supervisor !== 'Todos').sort((a, b) => b.efectividad - a.efectividad).forEach((d) => {
+    const b = document.createElement('button'); b.className = 'ef-mem'; b.setAttribute('aria-pressed', String(d.supervisor === sup)); b.dataset.sup = d.supervisor;
+    const v = document.createElement('span'); v.className = 'v'; EF.mark(v, 'resumen', 'efectividad', {mes: d.mes, supervisor: d.supervisor}); v.textContent = EF.pct0(d.efectividad);
+    const cap = document.createElement('span'); cap.className = 'ef-sig' + (d.efectividad >= EF.META_EF ? ' ok' : ''); cap.title = 'Señal: efectividad ' + EF.pct(d.efectividad);
+    const lit = Math.max(1, Math.round(d.efectividad * 5));
+    for (let i = 0; i < 5; i++) { const bar = document.createElement('i'); bar.style.height = (30 + i * 17.5) + '%'; if (i < lit) bar.className = 'on'; cap.appendChild(bar); }
+    const av = document.createElement('span'); av.className = 'ef-tw'; av.innerHTML = EF.TOWER;
+    const n = document.createElement('span'); n.className = 'n'; n.textContent = d.supervisor;
+    const s = document.createElement('span'); s.className = 's'; s.textContent = 'Calidad ' + EF.pct0(d.calidad);
+    b.append(v, cap, av, n, s);
+    const cm = cu.find((x) => x.supervisor === d.supervisor);
+    if (cm) {
+      const g = document.createElement('span'); g.className = 'g';
+      const l1 = document.createElement('span'); l1.textContent = 'Meta ' + EF.money(cm.meta);
+      const l2 = document.createElement('span'); l2.textContent = 'Fact. ' + EF.money(cm.facturado) + ' · ' + EF.pct0(cm.pct);
+      const l3 = document.createElement('span'); l3.className = 'pj ef-' + (cm.pct_proy >= 1 ? 'ok' : cm.pct_proy >= 0.95 ? 'warn' : 'bad');
+      l3.textContent = cm.dias ? 'Proy. ' + EF.money(cm.proyeccion) + ' · ' + EF.pct0(cm.pct_proy) : 'Sin facturación aún';
+      g.append(l1, l2, l3); b.appendChild(g);
+    }
+    team.appendChild(b);
+  });
+  const mtot = document.getElementById('mt-tot'); mtot.replaceChildren();
+  const ct = cu.find((x) => x.supervisor === 'Todos');
+  if (ct) {
+    const st = ct.pct_proy >= 1 ? 'ok' : ct.pct_proy >= 0.95 ? 'warn' : 'bad';
+    const a1 = document.createElement('span'); a1.innerHTML = ''; a1.append('Facturación del mes: ');
+    const b1 = document.createElement('b'); b1.textContent = EF.money(ct.facturado); a1.append(b1, ' de ' + EF.money(ct.meta) + ' (' + EF.pct0(ct.pct) + ')');
+    const a2 = document.createElement('span'); a2.className = 'pj ef-' + st; a2.textContent = ct.dias ? 'Proyección al cierre ' + EF.money(ct.proyeccion) + ' · ' + EF.pct0(ct.pct_proy) : 'Sin facturación aún';
+    const a3 = document.createElement('span'); a3.className = 'dh'; a3.textContent = 'Día hábil ' + ct.dias + ' de ' + ct.habiles;
+    mtot.append(a1, a2, a3);
+  }
+  const se = EF.state(row.efectividad, EF.META_EF), sc = EF.state(row.calidad, EF.META_CAL);
+  const p1 = document.getElementById('t-ef-pill'), p2 = document.getElementById('t-cal-pill');
+  p1.className = 'ef-pill ef-' + se; p1.textContent = EF.label(se);
+  p2.className = 'ef-pill ef-' + sc; p2.textContent = EF.label(sc);
+  const n1 = document.getElementById('t-ef-note'); n1.replaceChildren();
+  const a = document.createElement('span'); EF.mark(a, 'resumen', 'completadas', w); a.textContent = EF.num(row.completadas);
+  const b = document.createElement('span'); EF.mark(b, 'resumen', 'actividades', w); b.textContent = EF.num(row.actividades);
+  n1.append(a, ' completadas de ', b, ' asignadas');
+  const n2 = document.getElementById('t-cal-note'); n2.replaceChildren();
+  const g = document.createElement('span'); EF.mark(g, 'resumen', 'garantias', w); g.textContent = EF.num(row.garantias);
+  n2.append(g, ' garantías en el periodo');
+  const n4 = document.getElementById('t-cob-note'); n4.replaceChildren();
+  const ts = document.createElement('span'); EF.mark(ts, 'resumen', 'tecnicos_supervisados', w); ts.textContent = EF.num(row.tecnicos_supervisados);
+  const tt = document.createElement('span'); EF.mark(tt, 'resumen', 'tecnicos', w); tt.textContent = EF.num(row.tecnicos);
+  n4.append(ts, ' de ', tt, ' técnicos');
+
+  take.replaceChildren();
+  const who = sup === 'Todos' ? 'La operación' : 'El equipo de ' + sup;
+  const e1 = document.createElement('b'); EF.mark(e1, 'resumen', 'efectividad', w); e1.textContent = EF.pct(row.efectividad);
+  const e2 = document.createElement('b'); EF.mark(e2, 'resumen', 'calidad', w); e2.textContent = EF.pct(row.calidad);
+  take.append(who + ' completa el ', e1, ' de sus órdenes con una calidad del ', e2, '. ');
+  const c = dash.data('carpetas');
+  if (c.status === 'ok') {
+    const mine = c.data.filter((d) => d.mes === mes && d.supervisor === row.supervisor && d.total >= 30).sort((x, y) => x.efectividad - y.efectividad);
+    if (mine.length) {
+      const low = mine[0];
+      const s = document.createElement('b'); EF.mark(s, 'carpetas', 'efectividad', {mes: mes, supervisor: row.supervisor, carpeta: low.carpeta}); s.textContent = EF.pct(low.efectividad);
+      take.append('La carpeta más floja es ' + low.carpeta + ', con ', s, '.');
+    }
+  }
+});
+</script>
+
+<script>
+EF.open = EF.open || {};
+EF.barList = function (box, rows, o) {
+  const key = o.key || box.id, limit = o.limit || 0, open = !!EF.open[key];
+  const shown = limit && !open ? rows.slice(0, limit) : rows;
+  const max = o.max != null ? o.max : (d3.max(rows, o.value) || 1);
+  box.replaceChildren();
+  const list = document.createElement('div'); list.className = 'bl';
+  shown.forEach((r, i) => {
+    const row = document.createElement(o.onClick ? 'button' : 'div'); row.className = 'bl-row' + (o.onClick ? ' bl-click' : '');
+    if (o.onClick) { row.type = 'button'; row.addEventListener('click', () => o.onClick(r)); }
+    const top = document.createElement('div'); top.className = 'bl-top';
+    const name = document.createElement('span'); name.className = 'bl-name';
+    if (o.rank) { const n = document.createElement('span'); n.className = 'bl-rank'; n.textContent = (i + 1) + '.'; name.appendChild(n); }
+    name.append(o.label(r)); name.title = o.label(r);
+    if (o.chevron) { const ch = document.createElement('span'); ch.className = 'bl-chev'; ch.textContent = '›'; name.appendChild(ch); }
+    const val = document.createElement('span'); val.className = 'bl-val';
+    if (o.dot) { const dt = document.createElement('span'); dt.className = 'bl-dot'; dt.style.background = o.dot(r); val.appendChild(dt); }
+    val.append(o.fmt(r));
+    if (o.sub) { const s = document.createElement('span'); s.className = 'bl-sub'; s.textContent = o.sub(r); val.appendChild(s); }
+    top.append(name, val);
+    const track = document.createElement('div'); track.className = 'bl-track';
+    const fill = document.createElement('div'); fill.className = 'bl-fill'; if (o.color) fill.style.background = o.color; fill.style.width = Math.max(0.5, Math.min(100, o.value(r) / max * 100)) + '%';
+    track.appendChild(fill);
+    if (o.ref != null) { const rf = document.createElement('div'); rf.className = 'bl-ref'; rf.style.left = (o.ref / max * 100) + '%'; rf.title = 'Meta'; track.appendChild(rf); }
+    row.append(top, track); list.appendChild(row);
+  });
+  box.appendChild(list);
+  if (limit && rows.length > limit) {
+    const b = document.createElement('button'); b.className = 'bl-more';
+    b.textContent = open ? 'Ver solo los primeros ' + limit : 'Ver todos (' + rows.length + ')';
+    b.addEventListener('click', () => { EF.open[key] = !open; EF.barList(box, rows, o); });
+    box.appendChild(b);
+  }
+};
+EF.prep = function (box, d) {
+  if (d.status === 'error') { EF.fail(box); return false; }
+  if (d.status !== 'ok') { box.replaceChildren(); box.classList.toggle('dash-skeleton', d.status === 'loading'); return false; }
+  box.classList.remove('dash-skeleton'); return true;
+};
+EF.empty = function (box, msg) { box.replaceChildren(); const p = document.createElement('p'); p.className = 'ef-note'; p.textContent = msg; box.appendChild(p); };
+</script>
+
+<script>
+dash.calc('cumplimiento', {
+  title: 'Cumplimiento de metas',
+  description: 'Facturado frente a la meta de cada supervisor y proyección al cierre: facturado ÷ días hábiles con facturación × días hábiles del mes.',
+  inputs: ['resumen', 'metas'],
+  fn: (resumen, metas) => {
+    const out = [];
+    const meses = [...new Set(metas.map((m) => m.mes))];
+    meses.forEach((mes) => {
+      const ms = metas.filter((m) => m.mes === mes);
+      const tot = resumen.find((r) => r.mes === mes && r.supervisor === 'Todos') || {};
+      const dias = Number(tot.dias_facturados) || 0, habiles = Number(ms[0].dias_habiles) || 0;
+      const rows = ms.map((m) => {
+        const r = resumen.find((x) => x.mes === mes && x.supervisor === m.supervisor) || {};
+        const fact = Number(r.facturado) || 0, meta = Number(m.meta);
+        const proy = dias ? fact / dias * habiles : 0;
+        return {mes, supervisor: m.supervisor, meta, facturado: fact, pct: meta ? fact / meta : 0, proyeccion: Math.round(proy), pct_proy: meta ? proy / meta : 0, dias, habiles};
+      });
+      const meta = rows.reduce((s, r) => s + r.meta, 0), fact = rows.reduce((s, r) => s + r.facturado, 0), proy = dias ? fact / dias * habiles : 0;
+      out.push(...rows, {mes, supervisor: 'Todos', meta, facturado: fact, pct: meta ? fact / meta : 0, proyeccion: Math.round(proy), pct_proy: meta ? proy / meta : 0, dias, habiles});
+    });
+    return out;
+  },
+});
+</script>
+
+<script>
+dash.onData(() => {
+  const box = document.getElementById('c-rank'); const d = dash.data('tecnicos'); const sup = EF.sup(), mes = EF.mes();
+  if (!EF.prep(box, d)) return;
+  const rows = d.data.filter((r) => r.mes === mes && (sup === 'Todos' || r.supervisor === sup)).sort((a, b) => b.efectividad - a.efectividad);
+  EF.barList(box, rows, {limit: 8, rank: true, max: 1, ref: EF.META_EF, label: (r) => r.tecnico, value: (r) => r.efectividad,
+    fmt: (r) => EF.pct(r.efectividad), sub: (r) => EF.num(r.completadas) + '/' + EF.num(r.total), dot: (r) => EF.color(EF.state(r.efectividad, EF.META_EF))});
+});
+</script>
+
+<script>
+(() => {
+let sel = null;
+const box = document.getElementById('c-carp');
+const note = document.getElementById('carp-note');
+function draw() {
+  const sup = EF.sup(), mes = EF.mes();
+  const d = dash.data('carpetas'), dt = dash.data('carpeta_tecnicos');
+  if (!EF.prep(box, d)) return;
+  const rows = d.data.filter((r) => r.mes === mes && r.supervisor === sup).sort((a, b) => b.efectividad - a.efectividad);
+  if (sel && !rows.some((r) => r.carpeta === sel)) sel = null;
+  if (!sel) {
+    note.textContent = 'Completadas sobre asignadas en cada carpeta. Toca una carpeta para ver sus técnicos.';
+    EF.barList(box, rows, {max: 1, ref: EF.META_EF, label: (r) => r.carpeta, value: (r) => r.efectividad, chevron: true,
+      fmt: (r) => EF.pct(r.efectividad), sub: (r) => EF.num(r.total) + ' órd.', dot: (r) => EF.color(EF.state(r.efectividad, EF.META_EF)),
+      onClick: (r) => { sel = r.carpeta; EF.open['c-carp'] = false; draw(); }});
+    return;
+  }
+  const c = rows.find((r) => r.carpeta === sel);
+  const tecs = dt.status === 'ok' ? dt.data.filter((r) => r.mes === mes && r.carpeta === sel && (sup === 'Todos' || r.supervisor === sup)).sort((a, b) => b.efectividad - a.efectividad || b.total - a.total) : [];
+  note.textContent = 'Técnicos de la carpeta, de mayor a menor efectividad. La raya vertical marca la meta.';
+  const head = document.createElement('div'); head.className = 'ef-drill';
+  const back = document.createElement('button'); back.className = 'ef-back'; back.textContent = '← Todas las carpetas';
+  back.addEventListener('click', () => { sel = null; draw(); });
+  const ttl = document.createElement('div'); ttl.className = 'ef-drill-t';
+  const nm = document.createElement('b'); nm.textContent = sel;
+  const ef = document.createElement('span'); EF.mark(ef, 'carpetas', 'efectividad', {mes: mes, supervisor: sup, carpeta: sel}); ef.textContent = EF.pct(c.efectividad);
+  ttl.append(nm, ' · ', ef, ' · ' + EF.num(tecs.length) + ' técnicos');
+  head.append(back, ttl);
+  const list = document.createElement('div');
+  if (dt.status !== 'ok') list.className = 'dash-skeleton';
+  else if (tecs.length) EF.barList(list, tecs, {limit: 12, rank: true, max: 1, ref: EF.META_EF, label: (r) => r.tecnico, value: (r) => r.efectividad,
+    fmt: (r) => EF.pct(r.efectividad), sub: (r) => EF.num(r.completadas) + '/' + EF.num(r.total), dot: (r) => EF.color(EF.state(r.efectividad, EF.META_EF)), key: 'c-carp-tec'});
+  else EF.empty(list, 'Sin técnicos en esta carpeta para el filtro elegido.');
+  box.replaceChildren(head, list);
+}
+dash.onData(draw);
+})();
+</script>
+
+<script>
+dash.onData(() => {
+  const box = document.getElementById('c-dia'); const d = dash.data('diario'); const sup = EF.sup();
+  if (d.status === 'error') return EF.fail(box);
+  if (d.status !== 'ok') { box.replaceChildren(); box.classList.toggle('dash-skeleton', d.status === 'loading'); return; }
+  box.classList.remove('dash-skeleton');
+  const mes = EF.mes(); const rows = d.data.filter((r) => r.mes === mes && r.supervisor === sup).map((r) => ({...r, date: new Date(r.dia + 'T00:00:00Z')})).sort((a, b) => a.date - b.date);
+  const W = box.clientWidth || 400, H = 170;
+  box.replaceChildren();
+  const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('height', H);
+  const m = {t: 12, r: 12, b: 24, l: 40};
+  const lo = Math.max(0, Math.floor((d3.min(rows, (r) => r.efectividad) - 0.05) * 10) / 10);
+  const x = d3.scaleUtc(d3.extent(rows, (r) => r.date), [m.l, W - m.r]);
+  const y = d3.scaleLinear([lo, 1], [H - m.b, m.t]);
+  const yt = y.ticks(4);
+  svg.append('g').selectAll('line').data(yt).join('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y).attr('y2', y).attr('stroke', 'var(--cds-chart-grid)');
+  svg.append('g').selectAll('text').data(yt).join('text').attr('x', m.l - 6).attr('y', y).attr('dy', '0.35em').attr('text-anchor', 'end').attr('font-size', 11).attr('fill', 'var(--color-fg-muted)').text(EF.pct0);
+  const xa = svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(Math.max(2, Math.floor(W / 90))).tickFormat((d) => d.getUTCDate() + ' ' + ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][d.getUTCMonth()]).tickSizeOuter(0));
+  xa.attr('font-size', null).attr('font-family', null); xa.selectAll('text').attr('font-size', 11).attr('fill', 'var(--color-fg-muted)');
+  xa.selectAll('.tick text').attr('text-anchor', function () { const tx = +this.parentNode.getAttribute('transform').match(/translate\(([-\d.]+)/)[1]; return tx - m.l < 20 ? 'start' : W - m.r - tx < 20 ? 'end' : 'middle'; }); xa.selectAll('line,path').attr('stroke', 'var(--cds-chart-axis)');
+  svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(EF.META_EF)).attr('y2', y(EF.META_EF)).attr('stroke', 'var(--cds-chart-reference)').attr('stroke-dasharray', '4 3');
+  svg.append('text').attr('x', W - m.r).attr('y', y(EF.META_EF) - 5).attr('text-anchor', 'end').attr('font-size', 11).attr('fill', 'var(--color-fg-muted)').text('Meta ' + EF.pct0(EF.META_EF));
+  const gid = 'ef-area-grad';
+  const grad = svg.append('defs').append('linearGradient').attr('id', gid).attr('x1', 0).attr('x2', 0).attr('y1', 0).attr('y2', 1);
+  [[0, .22], [.5, .08], [1, 0]].forEach(([o, a]) => grad.append('stop').attr('offset', o).style('stop-color', EF.accent).style('stop-opacity', a));
+  svg.append('path').datum(rows).attr('fill', `url(#${gid})`).attr('d', d3.area((r) => x(r.date), H - m.b, (r) => y(r.efectividad)));
+  svg.append('path').datum(rows).attr('fill', 'none').attr('stroke', EF.accent).attr('stroke-width', 2).attr('stroke-linecap', 'round').attr('stroke-linejoin', 'round').attr('d', d3.line((r) => x(r.date), (r) => y(r.efectividad)));
+  const dot = svg.append('circle').attr('r', 4).attr('fill', EF.accent).attr('visibility', 'hidden');
+  const tip = EF.tip(box);
+  svg.append('rect').attr('x', m.l).attr('y', m.t).attr('width', W - m.l - m.r).attr('height', H - m.t - m.b).attr('fill', 'transparent')
+    .on('mousemove', (ev) => {
+      const [px] = d3.pointer(ev); const i = d3.bisector((r) => r.date).center(rows, x.invert(px)); const r = rows[i]; if (!r) return;
+      dot.attr('cx', x(r.date)).attr('cy', y(r.efectividad)).attr('visibility', 'visible');
+      tip.show(ev, [r.date.getUTCDate() + ' de ' + ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'][r.date.getUTCMonth()], 'Efectividad ' + EF.pct(r.efectividad), EF.num(r.completadas) + ' de ' + EF.num(r.total) + ' órdenes']);
+    })
+    .on('mouseleave', () => { dot.attr('visibility', 'hidden'); tip.hide(); });
+});
+</script>
+
+<script>
+dash.onData(() => {
+  const box = document.getElementById('c-tipo'); const d = dash.data('sup_tipo'); const sup = EF.sup(), mes = EF.mes();
+  if (!EF.prep(box, d)) return;
+  const rows = d.data.filter((r) => r.mes === mes && r.supervisor === sup).sort((a, b) => b.supervisiones - a.supervisiones);
+  const tot = d3.sum(rows, (r) => r.supervisiones) || 1;
+  rows.length ? EF.barList(box, rows, {label: (r) => r.tipo, value: (r) => r.supervisiones, fmt: (r) => EF.num(r.supervisiones), sub: (r) => EF.pct0(r.supervisiones / tot)}) : EF.empty(box, 'Sin supervisiones en este periodo.');
+});
+</script>
+
+<script>
+EF.fcSel = null;
+EF.drawFC = function () {
+  const sup = EF.sup(), mes = EF.mes();
+  const box = document.getElementById('c-fcarp'), note = document.getElementById('fcarp-note');
+  const d = dash.data('fact_carpetas'), dt = dash.data('fact_carpeta_tecnicos');
+  if (!EF.prep(box, d)) return;
+  const rows = d.data.filter((r) => r.mes === mes && r.supervisor === sup).sort((a, b) => b.valor - a.valor);
+  if (!rows.length) { EF.fcSel = null; EF.empty(box, 'La pestaña Presupuesto aún no tiene datos de este mes.'); return; }
+  if (EF.fcSel && !rows.some((r) => r.carpeta === EF.fcSel)) EF.fcSel = null;
+  const tot = d3.sum(rows, (r) => r.valor) || 1;
+  if (!EF.fcSel) {
+    note.textContent = 'Valor facturado de cada carpeta y su parte del total. Toca una carpeta para ver sus técnicos.';
+    EF.barList(box, rows, {label: (r) => r.carpeta, value: (r) => r.valor, fmt: (r) => EF.money(r.valor), sub: (r) => EF.pct0(r.valor / tot), chevron: true,
+      onClick: (r) => { EF.fcSel = r.carpeta; EF.open['c-fcarp-tec'] = false; EF.drawFC(); }});
+    return;
+  }
+  const c = rows.find((r) => r.carpeta === EF.fcSel);
+  const tecs = dt.status === 'ok' ? dt.data.filter((r) => r.mes === mes && r.carpeta === EF.fcSel && (sup === 'Todos' || r.supervisor === sup)).sort((a, b) => b.valor - a.valor) : [];
+  note.textContent = 'Técnicos de la carpeta, de mayor a menor facturación, con sus órdenes facturadas.';
+  const head = document.createElement('div'); head.className = 'ef-drill';
+  const back = document.createElement('button'); back.className = 'ef-back'; back.textContent = '← Todas las carpetas';
+  back.addEventListener('click', () => { EF.fcSel = null; EF.drawFC(); });
+  const ttl = document.createElement('div'); ttl.className = 'ef-drill-t';
+  const nm = document.createElement('b'); nm.textContent = EF.fcSel;
+  const v = document.createElement('span'); EF.mark(v, 'fact_carpetas', 'valor', {mes: mes, supervisor: sup, carpeta: EF.fcSel}); v.textContent = EF.money(c.valor);
+  ttl.append(nm, ' · ', v, ' · ' + EF.num(tecs.length) + ' técnicos');
+  head.append(back, ttl);
+  const list = document.createElement('div');
+  if (dt.status !== 'ok') list.className = 'dash-skeleton';
+  else if (tecs.length) EF.barList(list, tecs, {limit: 12, rank: true, label: (r) => r.tecnico, value: (r) => r.valor, fmt: (r) => EF.money(r.valor),
+    sub: (r) => EF.num(r.ordenes) + ' órd. · ' + EF.money(r.valor / Math.max(1, r.ordenes)) + '/órd.', key: 'c-fcarp-tec'});
+  else EF.empty(list, 'Sin técnicos en esta carpeta para el filtro elegido.');
+  box.replaceChildren(head, list);
+};
+</script>
+
+<script>
+dash.onData(() => {
+  const sup = EF.sup(), mes = EF.mes();
+  const b1 = document.getElementById('c-ftec'), d1 = dash.data('fact_tecnicos');
+  if (EF.prep(b1, d1)) {
+    const rows = d1.data.filter((r) => r.mes === mes && (sup === 'Todos' || r.supervisor === sup)).sort((a, b) => b.valor - a.valor);
+    rows.length ? EF.barList(b1, rows, {limit: 8, rank: true, label: (r) => r.tecnico, value: (r) => r.valor, fmt: (r) => EF.money(r.valor), sub: (r) => EF.num(r.ordenes) + ' órd.'})
+      : EF.empty(b1, 'La pestaña Presupuesto aún no tiene datos de este mes.');
+  }
+  EF.drawFC();
+});
+</script>
+
+<script>
+(() => {
+  const tb = document.querySelector('#tb-tec tbody'); const q = document.getElementById('ef-q');
+  let key = 'efectividad', dir = -1;
+  document.querySelectorAll('#tb-tec th button').forEach((b) => b.addEventListener('click', () => { const k = b.dataset.k; dir = k === key ? -dir : (k === 'tecnico' || k === 'supervisor' ? 1 : -1); key = k; draw(); }));
+  q.addEventListener('input', () => draw());
+  function cell(tr, text, cls, color) { const td = document.createElement('td'); if (cls) td.className = cls; if (color) { const s = document.createElement('span'); s.className = 'ef-dot'; s.style.color = color; td.appendChild(s); } td.append(text); tr.appendChild(td); }
+  function draw() {
+    const d = dash.data('tecnicos'); const sup = EF.sup();
+    document.querySelectorAll('#tb-tec th').forEach((th) => { const b = th.querySelector('button'); th.setAttribute('aria-sort', b && b.dataset.k === key ? (dir > 0 ? 'ascending' : 'descending') : 'none'); });
+    if (d.status !== 'ok') { tb.replaceChildren(); return; }
+    const term = q.value.trim().toLowerCase();
+    const mes = EF.mes(); const rows = d.data.filter((r) => r.mes === mes && (sup === 'Todos' || r.supervisor === sup) && (!term || r.tecnico.toLowerCase().includes(term)))
+      .sort((a, b) => (typeof a[key] === 'number' ? a[key] - b[key] : String(a[key]).localeCompare(String(b[key]), 'es')) * dir);
+    tb.replaceChildren(...rows.map((r) => {
+      const tr = document.createElement('tr'); tr.dataset.key = encodeURIComponent(r.mes) + ',' + encodeURIComponent(r.tecnico);
+      cell(tr, r.tecnico); cell(tr, r.supervisor, 'ef-hide-sm'); cell(tr, EF.num(r.total), 'n');
+      cell(tr, EF.pct(r.efectividad), 'n', EF.color(EF.state(r.efectividad, EF.META_EF)));
+      cell(tr, EF.num(r.garantias), 'n ef-hide-sm');
+      cell(tr, EF.pct(r.calidad), 'n', EF.color(EF.state(r.calidad, EF.META_CAL)));
+      cell(tr, EF.num(r.supervisado), 'n');
+      return tr;
+    }));
+  }
+  dash.onData(draw);
+})();
+</script>
+
+<script>
+(() => {
+let soloReinc = false, key = 'dia', dir = -1;
+const bAll = document.getElementById('ms-all'), bRe = document.getElementById('ms-reinc');
+const setF = (v) => { soloReinc = v; if (v) { key = 'reinc_garantia'; dir = -1; } else { key = 'dia'; dir = -1; } bAll.setAttribute('aria-pressed', String(!v)); bRe.setAttribute('aria-pressed', String(v)); draw(); };
+document.querySelectorAll('#tb-sup th button').forEach((b) => b.addEventListener('click', () => { const k = b.dataset.k; dir = k === key ? -dir : (k === 'reinc_garantia' || k === 'dia' ? -1 : 1); key = k; draw(); }));
+bAll.addEventListener('click', () => setF(false)); bRe.addEventListener('click', () => setF(true));
+const MES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const fmt = (s) => { const d = new Date(s + 'T00:00:00Z'); return d.getUTCDate() + ' ' + MES[d.getUTCMonth()]; };
+function draw() {
+  const tb = document.querySelector('#tb-sup tbody'); const d = dash.data('supervisiones'); const sup = EF.sup();
+  document.getElementById('ms-title').textContent = (soloReinc ? 'Reincidencias supervisadas' : 'Supervisiones') + (sup === 'Todos' ? '' : ' de ' + sup);
+  document.querySelectorAll('#tb-sup th').forEach((th) => { const b = th.querySelector('button'); th.setAttribute('aria-sort', b && b.dataset.k === key ? (dir > 0 ? 'ascending' : 'descending') : 'none'); if (b) b.textContent = b.textContent.replace(/ [↑↓]$/, '') + (b.dataset.k === key ? (dir > 0 ? ' ↑' : ' ↓') : ''); });
+  if (d.status !== 'ok') { tb.replaceChildren(); return; }
+  const cmp = (a, b) => (typeof a[key] === 'number' ? a[key] - b[key] : String(a[key]).localeCompare(String(b[key]), 'es')) * dir;
+  const mes = EF.mes(); const rows = d.data.filter((r) => r.mes === mes && (sup === 'Todos' || r.supervisor === sup) && (!soloReinc || r.reinc_garantia > 0)).sort((a, b) => cmp(a, b) || b.dia.localeCompare(a.dia) || b.id - a.id);
+  tb.replaceChildren(...rows.map((r) => {
+    const tr = document.createElement('tr'); tr.dataset.key = String(r.id);
+    const add = (t, c) => { const td = document.createElement('td'); if (c) td.className = c; td.textContent = t; tr.appendChild(td); return td; };
+    add(String(r.id), 'ef-hide-sm'); add(fmt(r.dia)); add(r.supervisor, 'ef-hide-sm'); add(r.tipo); add(r.tecnico_supervisado); add(r.orden, 'ef-hide-sm');
+    const td = add(r.reinc_garantia > 0 ? 'Sí (' + r.reinc_garantia + ')' : 'No', 'n'); if (r.reinc_garantia > 0) td.style.color = 'var(--color-bad)';
+    return tr;
+  }));
+}
+dash.onData(draw);
+})();
+</script>
